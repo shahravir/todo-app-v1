@@ -9,10 +9,20 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/datetimepicker": "^8.4.2",
+    "axios": "^1.10.0",
     "expo": "~53.0.17",
     "expo-status-bar": "~2.2.3",
+    "pouchdb": "^9.0.0",
+    "pouchdb-adapter-asyncstorage": "^6.4.1",
     "react": "19.0.0",
-    "react-native": "0.79.5"
+    "react-dom": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-date-picker": "^5.0.13",
+    "react-native-web": "^0.20.0",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
