@@ -21,6 +21,10 @@ const BREAKPOINT = 900;
 export default function App() {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -83,10 +87,18 @@ export default function App() {
     if (!input.trim()) return;
     const todo = {
       text: input.trim(),
+      description: description.trim(),
       done: false,
       id: Date.now().toString(),
+      dueDate: dueDate ? new Date(dueDate) : null,
+      priority,
+      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     };
     setInput('');
+    setDescription('');
+    setDueDate('');
+    setPriority('medium');
+    setTags('');
     setModalVisible(false);
     Keyboard.dismiss();
     if (!isOnline || !isBackendAvailable) {
@@ -270,8 +282,16 @@ export default function App() {
           visible={modalVisible}
           input={input}
           setInput={setInput}
+          description={description}
+          setDescription={setDescription}
+          dueDate={dueDate}
+          setDueDate={setDueDate}
+          priority={priority}
+          setPriority={setPriority}
+          tags={tags}
+          setTags={setTags}
           onAdd={handleAddTodo}
-          onCancel={() => { setModalVisible(false); setInput(''); }}
+          onCancel={() => { setModalVisible(false); setInput(''); setDescription(''); setDueDate(''); setPriority('medium'); setTags(''); }}
           inputRef={inputRef}
         />
         <StatusBar style="auto" />

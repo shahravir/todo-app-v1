@@ -1,14 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-
-const TodoSchema = new mongoose.Schema({
-  text: String,
-  done: Boolean,
-  id: String, // for compatibility with frontend
-}, { timestamps: true });
-
-const Todo = mongoose.model('Todo', TodoSchema);
+const Todo = require('../models/Todo');
 
 // Get all todos
 router.get('/', async (req, res) => {
@@ -18,8 +11,8 @@ router.get('/', async (req, res) => {
 
 // Add a todo
 router.post('/', async (req, res) => {
-  const { text, done, id } = req.body;
-  const todo = new Todo({ text, done, id });
+  const { text, description = '', done = false, id, dueDate = null, priority = 'medium', tags = [] } = req.body;
+  const todo = new Todo({ text, description, done, id, dueDate, priority, tags });
   await todo.save();
   res.json(todo);
 });
@@ -27,8 +20,12 @@ router.post('/', async (req, res) => {
 // Update a todo
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { text, done } = req.body;
-  const todo = await Todo.findOneAndUpdate({ id }, { text, done }, { new: true });
+  const { text, description = '', done = false, dueDate = null, priority = 'medium', tags = [] } = req.body;
+  const todo = await Todo.findOneAndUpdate(
+    { id },
+    { text, description, done, dueDate, priority, tags },
+    { new: true }
+  );
   res.json(todo);
 });
 
