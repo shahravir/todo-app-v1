@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Platform, TouchableOpacity } from 'react-native';
-import { Checkbox, Text } from 'react-native-paper';
+import { Checkbox, Text, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const PRIORITY_COLORS = {
@@ -17,7 +17,67 @@ function formatDueDate(date) {
   return `${day} ${month}`;
 }
 
-export default function TodoItem({ item, onToggle }) {
+// Simple natural language parsing helpers (same as AddTodoModal)
+const PRIORITY_WORDS = ['high', 'medium', 'low'];
+const PRIORITY_MAP = { high: 'high', medium: 'medium', low: 'low' };
+const TAG_REGEX = /#(\w+)/g;
+const DATE_WORDS = [
+  { word: 'today', getDate: () => new Date() },
+  { word: 'tomorrow', getDate: () => { const d = new Date(); d.setDate(d.getDate() + 1); return d; } },
+];
+function parseInput(text) {
+  let priority = null;
+  for (const word of PRIORITY_WORDS) {
+    if (text.toLowerCase().includes(word)) {
+      priority = PRIORITY_MAP[word];
+      break;
+    }
+  }
+  const tags = [];
+  let tagMatch;
+  while ((tagMatch = TAG_REGEX.exec(text))) {
+    tags.push(tagMatch[1]);
+  }
+  let dueDate = null;
+  for (const { word, getDate } of DATE_WORDS) {
+    if (text.toLowerCase().includes(word)) {
+      dueDate = getDate();
+      break;
+    }
+  }
+  const dateRegex = /(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2})/;
+  const dateMatch = text.match(dateRegex);
+  if (!dueDate && dateMatch) {
+    let day, monthStr;
+    if (dateMatch[1] && dateMatch[2]) {
+      day = parseInt(dateMatch[1], 10);
+      monthStr = dateMatch[2];
+    } else if (dateMatch[3] && dateMatch[4]) {
+      day = parseInt(dateMatch[4], 10);
+      monthStr = dateMatch[3];
+    }
+    if (day && monthStr) {
+      const month = new Date(`${monthStr} 1, 2000`).getMonth();
+      if (!isNaN(month)) {
+        const now = new Date();
+        dueDate = new Date(now.getFullYear(), month, day);
+      }
+    }
+  }
+  let cleanText = text
+    .replace(TAG_REGEX, '')
+    .replace(/\b(today|tomorrow)\b/gi, '')
+    .replace(/\b(high|medium|low)\b/gi, '')
+    .replace(dateRegex, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return { cleanText, priority, tags, dueDate };
+}
+
+export default function TodoItem({ item, onToggle, onEdit }) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(item.text);
+  const inputRef = useRef(null);
   const checkboxColor = PRIORITY_COLORS[item.priority] || '#bbb';
 
   const checkbox = (
@@ -29,6 +89,21 @@ export default function TodoItem({ item, onToggle }) {
       style={{ marginRight: 8, backgroundColor: 'transparent' }}
     />
   );
+
+  const handleEditStart = () => {
+    if (!item.done) {
+      setEditValue(item.text);
+      setEditing(true);
+      setTimeout(() => inputRef.current && inputRef.current.focus(), 100);
+    }
+  };
+  const handleEditEnd = () => {
+    setEditing(false);
+    if (editValue.trim() && editValue.trim() !== item.text) {
+      const parsed = parseInput(editValue);
+      onEdit(item.id, parsed);
+    }
+  };
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingVertical: 8, paddingHorizontal: 4 }}>
@@ -44,9 +119,26 @@ export default function TodoItem({ item, onToggle }) {
         </TouchableOpacity>
       )}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 20, fontWeight: 'regular', textDecorationLine: item.done ? 'line-through' : 'none', color: item.done ? '#bbb' : '#222' }}>
-          {item.text}
-        </Text>
+        {editing ? (
+          <TextInput
+            ref={inputRef}
+            value={editValue}
+            onChangeText={setEditValue}
+            onBlur={handleEditEnd}
+            style={{ fontSize: 20, fontWeight: 'regular', color: '#222', backgroundColor: '#fff', borderRadius: 6, paddingHorizontal: 6, marginVertical: 0, height: 36 }}
+            autoFocus
+            underlineColor="transparent"
+            dense
+            onSubmitEditing={handleEditEnd}
+            returnKeyType="done"
+          />
+        ) : (
+          <TouchableOpacity onPress={handleEditStart} activeOpacity={0.7}>
+            <Text style={{ fontSize: 20, fontWeight: 'regular', textDecorationLine: item.done ? 'line-through' : 'none', color: item.done ? '#bbb' : '#222' }}>
+              {item.text}
+            </Text>
+          </TouchableOpacity>
+        )}
         {item.description ? (
           <Text style={{ color: '#666', fontSize: 14, marginTop: 2 }}>{item.description}</Text>
         ) : null}

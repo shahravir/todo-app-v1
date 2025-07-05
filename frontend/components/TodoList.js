@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Platform, FlatList, ScrollView, TextInput as RNTextInput } from 'react-native';
+import { View, Platform, FlatList, ScrollView, TextInput as RNTextInput, TouchableWithoutFeedback, StyleSheet, Dimensions } from 'react-native';
 import { List, Divider, IconButton, Text, TextInput } from 'react-native-paper';
 import TodoItem from './TodoItem';
 import styles from '../styles/AppStyles';
@@ -61,15 +61,36 @@ function parseInput(text) {
   return { cleanText, priority, tags, dueDate };
 }
 
-export default function TodoList({ todos, onToggle, onDelete, onRefresh, refreshing, onInlineAdd }) {
+// Overlay to close inline input if user clicks/taps outside
+const Overlay = ({ onPress }) => (
+  <TouchableWithoutFeedback onPress={onPress}>
+    <View style={stylesOverlay.overlay} pointerEvents="auto" />
+  </TouchableWithoutFeedback>
+);
+
+const stylesOverlay = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+    backgroundColor: 'transparent',
+  },
+});
+
+export default function TodoList({ todos, onToggle, onDelete, onRefresh, refreshing, onInlineAdd, onEdit }) {
   const [inlineInput, setInlineInput] = useState('');
   const inputRef = useRef(null);
+  const [showInlineInput, setShowInlineInput] = useState(false);
 
   const handleInlineAdd = () => {
     const parsed = parseInput(inlineInput);
     if (parsed.cleanText.trim()) {
       onInlineAdd(parsed);
       setInlineInput('');
+      setShowInlineInput(false);
       if (inputRef.current) inputRef.current.blur();
     }
   };
@@ -83,25 +104,39 @@ export default function TodoList({ todos, onToggle, onDelete, onRefresh, refresh
               {todos.map((item, idx) => (
                 <React.Fragment key={item.id}>
                   <View style={{ marginBottom: 10 }}>
-                    <TodoItem item={item} onToggle={onToggle} onDelete={onDelete} />
+                    <TodoItem
+                      item={item}
+                      onToggle={onToggle}
+                      onDelete={onDelete}
+                      onEdit={onEdit}
+                    />
                   </View>
                   {idx < todos.length - 1 && <Divider />}
                 </React.Fragment>
               ))}
-              {/* Inline add row */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#fafafa', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#eee' }}>
-                <TextInput
-                  ref={inputRef}
-                  value={inlineInput}
-                  onChangeText={setInlineInput}
-                  placeholder="Add a task (e.g., 'Buy milk tomorrow high #groceries')"
-                  style={{ flex: 1, backgroundColor: 'transparent', fontSize: 16 }}
-                  onSubmitEditing={handleInlineAdd}
-                  blurOnSubmit={true}
-                  returnKeyType="done"
-                />
-                <IconButton icon="plus" color="#4caf50" size={28} onPress={handleInlineAdd} style={{ marginLeft: 2 }} />
-              </View>
+              {/* Inline add row toggle */}
+              {showInlineInput ? (
+                <>
+                  <Overlay onPress={() => setShowInlineInput(false)} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#fafafa', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#eee', zIndex: 20 }}>
+                    <TextInput
+                      ref={inputRef}
+                      value={inlineInput}
+                      onChangeText={setInlineInput}
+                      placeholder="Add a task (e.g., 'Buy milk tomorrow high #groceries')"
+                      style={{ flex: 1, backgroundColor: 'transparent', fontSize: 16 }}
+                      onSubmitEditing={handleInlineAdd}
+                      blurOnSubmit={true}
+                      returnKeyType="done"
+                    />
+                    <IconButton icon="plus" color="#4caf50" size={28} onPress={handleInlineAdd} style={{ marginLeft: 2 }} />
+                  </View>
+                </>
+              ) : (
+                <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
+                  <IconButton icon="plus" color="#4caf50" size={28} onPress={() => setShowInlineInput(true)} style={{ marginLeft: 0 }} />
+                </View>
+              )}
             </View>
           </ScrollView>
         ) : (
@@ -110,26 +145,40 @@ export default function TodoList({ todos, onToggle, onDelete, onRefresh, refresh
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <View style={{ marginBottom: 10 }}>
-                <TodoItem item={item} onToggle={onToggle} onDelete={onDelete} />
+                <TodoItem
+                  item={item}
+                  onToggle={onToggle}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                />
               </View>
             )}
             ItemSeparatorComponent={Divider}
             contentContainerStyle={{ flexGrow: 1 }}
             showsVerticalScrollIndicator={true}
             ListFooterComponent={
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#fafafa', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#eee' }}>
-                <TextInput
-                  ref={inputRef}
-                  value={inlineInput}
-                  onChangeText={setInlineInput}
-                  placeholder="Add a task (e.g., 'Buy milk tomorrow high #groceries')"
-                  style={{ flex: 1, backgroundColor: 'transparent', fontSize: 16 }}
-                  onSubmitEditing={handleInlineAdd}
-                  blurOnSubmit={true}
-                  returnKeyType="done"
-                />
-                <IconButton icon="plus" color="#4caf50" size={28} onPress={handleInlineAdd} style={{ marginLeft: 2 }} />
-              </View>
+              showInlineInput ? (
+                <>
+                  <Overlay onPress={() => setShowInlineInput(false)} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#fafafa', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#eee', zIndex: 20 }}>
+                    <TextInput
+                      ref={inputRef}
+                      value={inlineInput}
+                      onChangeText={setInlineInput}
+                      placeholder="Add a task (e.g., 'Buy milk tomorrow high #groceries')"
+                      style={{ flex: 1, backgroundColor: 'transparent', fontSize: 16 }}
+                      onSubmitEditing={handleInlineAdd}
+                      blurOnSubmit={true}
+                      returnKeyType="done"
+                    />
+                    <IconButton icon="plus" color="#4caf50" size={28} onPress={handleInlineAdd} style={{ marginLeft: 2 }} />
+                  </View>
+                </>
+              ) : (
+                <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
+                  <IconButton icon="plus" color="#4caf50" size={28} onPress={() => setShowInlineInput(true)} style={{ marginLeft: 0 }} />
+                </View>
+              )
             }
           />
         )}

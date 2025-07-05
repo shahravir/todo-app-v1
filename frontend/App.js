@@ -172,6 +172,33 @@ export default function App() {
     }
   }
 
+  async function handleEditTodo(id, parsed) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    const updated = {
+      ...todo,
+      text: parsed.cleanText || todo.text,
+      dueDate: parsed.dueDate !== undefined ? parsed.dueDate : todo.dueDate,
+      priority: parsed.priority || todo.priority,
+      tags: parsed.tags || todo.tags,
+    };
+    setTodos(todos.map(t => t.id === id ? updated : t));
+    if (!isOnline || !isBackendAvailable) {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todos.map(t => t.id === id ? updated : t)));
+      await addToQueue({ type: 'update', todo: updated });
+      return;
+    }
+    try {
+      const newTodo = await apiUpdateTodo(id, updated);
+      const newTodos = todos.map(t => t.id === id ? newTodo : t);
+      setTodos(newTodos);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
+      socketRef.current.emit('todo:update', newTodo);
+    } catch (e) {
+      console.error('Failed to update todo:', e);
+    }
+  }
+
   // Sync offline queue when coming back online or backend becomes available
   useEffect(() => {
     if (!isOnline || !isBackendAvailable) return;
@@ -329,6 +356,7 @@ export default function App() {
               onRefresh={handleRefresh}
               refreshing={refreshing}
               onInlineAdd={handleAddTodo}
+              onEdit={handleEditTodo}
             />
           </View>
           <AddTodoModal
