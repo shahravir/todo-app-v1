@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, Keyboard, ActivityIndicator, useWindowDimensions, TouchableOpacity } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io } from 'socket.io-client';
 import styles from './styles/AppStyles';
@@ -125,57 +124,46 @@ export default function App() {
     });
   };
 
-  function handleDragEnd(newOrder) {
-    setTodos(newOrder);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newOrder));
-    // Optionally: emit socket event for order sync
-  }
-
   if (loading) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
-          <ActivityIndicator size="large" color="#4caf50" />
-          <Text style={{ marginTop: 20 }}>Loading...</Text>
-        </View>
-      </GestureHandlerRootView>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
+        <ActivityIndicator size="large" color="#4caf50" />
+        <Text style={{ marginTop: 20 }}>Loading...</Text>
+      </View>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.root}>
-        {isLargeScreen && <Sidebar />}
-        {!isLargeScreen && (
-          <>
-            <TouchableOpacity style={styles.burgerBtn} onPress={() => setDrawerOpen(true)}>
-              <View style={styles.burgerBar} />
-              <View style={styles.burgerBar} />
-              <View style={styles.burgerBar} />
-            </TouchableOpacity>
-            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-          </>
-        )}
-        <View style={[styles.container, isLargeScreen && { marginLeft: SIDEBAR_WIDTH }]}> 
-          <Text style={styles.title}>Minimalist Todo</Text>
-          <TodoList
-            todos={todos}
-            onToggle={handleToggleTodo}
-            onDelete={handleDeleteTodo}
-            onDragEnd={handleDragEnd}
-          />
-          <Fab onPress={() => setModalVisible(true)} />
-          <AddTodoModal
-            visible={modalVisible}
-            input={input}
-            setInput={setInput}
-            onAdd={handleAddTodo}
-            onCancel={() => { setModalVisible(false); setInput(''); }}
-            inputRef={inputRef}
-          />
-          <StatusBar style="auto" />
-        </View>
+    <View style={styles.root}>
+      {isLargeScreen && <Sidebar />}
+      {!isLargeScreen && (
+        <>
+          <TouchableOpacity style={styles.burgerBtn} onPress={() => setDrawerOpen(true)}>
+            <View style={styles.burgerBar} />
+            <View style={styles.burgerBar} />
+            <View style={styles.burgerBar} />
+          </TouchableOpacity>
+          <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        </>
+      )}
+      <View style={[styles.container, isLargeScreen && { marginLeft: SIDEBAR_WIDTH }]}> 
+        <Text style={styles.title}>Minimalist Todo</Text>
+        <TodoList
+          todos={todos}
+          onToggle={handleToggleTodo}
+          onDelete={handleDeleteTodo}
+        />
+        <Fab onPress={() => setModalVisible(true)} />
+        <AddTodoModal
+          visible={modalVisible}
+          input={input}
+          setInput={setInput}
+          onAdd={handleAddTodo}
+          onCancel={() => { setModalVisible(false); setInput(''); }}
+          inputRef={inputRef}
+        />
+        <StatusBar style="auto" />
       </View>
-    </GestureHandlerRootView>
+    </View>
   );
 }

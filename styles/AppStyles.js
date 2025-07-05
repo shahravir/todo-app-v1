@@ -221,17 +221,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  dragHandle: {
-    marginRight: 10,
-    paddingHorizontal: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dragHandleIcon: {
-    fontSize: 22,
-    color: '#bbb',
-    fontWeight: 'bold',
-  },
 });
 
 export default styles; 
