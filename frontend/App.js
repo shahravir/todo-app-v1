@@ -9,7 +9,9 @@ import AddTodoModal from './components/AddTodoModal';
 import Sidebar from './components/Sidebar';
 import DrawerMenu from './components/DrawerMenu';
 import Fab from './components/Fab';
-import { fetchTodos, addTodo as apiAddTodo, updateTodo as apiUpdateTodo, deleteTodo as apiDeleteTodo } from './api/api';
+import { fetchTodos, addTodo as apiAddTodo, updateTodo as apiUpdateTodo, deleteTodo as apiDeleteTodo, pingBackend } from './api/api';
+import { addToQueue, processQueue } from './api/offlineQueue';
+import NetInfo from '@react-native-community/netinfo';
 
 const STORAGE_KEY = 'TODOS';
 const API_URL = 'http://localhost:3000';
@@ -26,6 +28,9 @@ export default function App() {
   const inputRef = useRef(null);
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= BREAKPOINT;
+  const [isOnline, setIsOnline] = useState(true);
+  const [isBackendAvailable, setIsBackendAvailable] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAndSyncTodos();
@@ -33,8 +38,12 @@ export default function App() {
     socketRef.current.on('todo:add', handleRemoteAdd);
     socketRef.current.on('todo:update', handleRemoteUpdate);
     socketRef.current.on('todo:delete', handleRemoteDelete);
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOnline(state.isConnected && state.isInternetReachable !== false);
+    });
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
+      unsubscribe();
     };
     // eslint-disable-next-line
   }, []);
@@ -45,6 +54,18 @@ export default function App() {
     }
   }, [modalVisible]);
 
+  // Periodically check backend availability
+  useEffect(() => {
+    let interval;
+    const check = async () => {
+      const ok = await pingBackend();
+      setIsBackendAvailable(ok);
+    };
+    check();
+    interval = setInterval(check, 5000); // check every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   async function fetchAndSyncTodos() {
     try {
       const data = await fetchTodos();
@@ -54,7 +75,6 @@ export default function App() {
       console.error('Failed to fetch todos:', e);
       const json = await AsyncStorage.getItem(STORAGE_KEY);
       if (json) setTodos(JSON.parse(json));
-      else setTodos([]);
     }
     setLoading(false);
   }
@@ -69,6 +89,12 @@ export default function App() {
     setInput('');
     setModalVisible(false);
     Keyboard.dismiss();
+    if (!isOnline || !isBackendAvailable) {
+      setTodos([todo, ...todos]);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([todo, ...todos]));
+      await addToQueue({ type: 'add', todo });
+      return;
+    }
     try {
       const newTodo = await apiAddTodo(todo);
       const newTodos = [newTodo, ...todos];
@@ -84,6 +110,13 @@ export default function App() {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
     const updated = { ...todo, done: !todo.done };
+    if (!isOnline || !isBackendAvailable) {
+      const newTodos = todos.map(t => t.id === id ? updated : t);
+      setTodos(newTodos);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
+      await addToQueue({ type: 'update', todo: updated });
+      return;
+    }
     try {
       const newTodo = await apiUpdateTodo(id, updated);
       const newTodos = todos.map(t => t.id === id ? newTodo : t);
@@ -96,6 +129,13 @@ export default function App() {
   }
 
   async function handleDeleteTodo(id) {
+    if (!isOnline || !isBackendAvailable) {
+      const newTodos = todos.filter(t => t.id !== id);
+      setTodos(newTodos);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
+      await addToQueue({ type: 'delete', id });
+      return;
+    }
     try {
       await apiDeleteTodo(id);
       const newTodos = todos.filter(t => t.id !== id);
@@ -106,6 +146,41 @@ export default function App() {
       console.error('Failed to delete todo:', e);
     }
   }
+
+  // Sync offline queue when coming back online or backend becomes available
+  useEffect(() => {
+    if (!isOnline || !isBackendAvailable) return;
+    (async () => {
+      await processQueue(async (action) => {
+        if (action.type === 'add') {
+          try {
+            const newTodo = await apiAddTodo(action.todo);
+            setTodos(prev => {
+              // Replace local todo with server todo if id matches
+              const filtered = prev.filter(t => t.id !== action.todo.id);
+              return [newTodo, ...filtered];
+            });
+            socketRef.current.emit('todo:add', newTodo);
+          } catch (e) { console.error('Failed to sync add:', e); }
+        } else if (action.type === 'update') {
+          try {
+            const newTodo = await apiUpdateTodo(action.todo.id, action.todo);
+            setTodos(prev => prev.map(t => t.id === newTodo.id ? newTodo : t));
+            socketRef.current.emit('todo:update', newTodo);
+          } catch (e) { console.error('Failed to sync update:', e); }
+        } else if (action.type === 'delete') {
+          try {
+            await apiDeleteTodo(action.id);
+            setTodos(prev => prev.filter(t => t.id !== action.id));
+            socketRef.current.emit('todo:delete', action.id);
+          } catch (e) { console.error('Failed to sync delete:', e); }
+        }
+      });
+      // After processing, update local storage
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    })();
+    // eslint-disable-next-line
+  }, [isOnline, isBackendAvailable]);
 
   // Socket handlers
   const handleRemoteAdd = async (todo) => {
@@ -131,6 +206,13 @@ export default function App() {
     });
   };
 
+  // Pull-to-refresh handler for mobile
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAndSyncTodos();
+    setRefreshing(false);
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
@@ -142,6 +224,27 @@ export default function App() {
 
   return (
     <View style={styles.root}>
+      {(!isOnline || !isBackendAvailable) && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          backgroundColor: '#ff9800',
+          paddingVertical: 10,
+          paddingHorizontal: 16,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 4,
+        }}>
+          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: 15 }}>
+            Backend unavailable. You are working offline. Changes will sync when backend is back.
+          </Text>
+        </View>
+      )}
       {isLargeScreen && <Sidebar />}
       {!isLargeScreen && (
         <>
@@ -159,6 +262,8 @@ export default function App() {
           todos={todos}
           onToggle={handleToggleTodo}
           onDelete={handleDeleteTodo}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
         />
         <Fab onPress={() => setModalVisible(true)} />
         <AddTodoModal

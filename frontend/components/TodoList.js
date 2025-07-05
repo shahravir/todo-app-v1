@@ -3,7 +3,7 @@ import { FlatList, Platform, View } from 'react-native';
 import TodoItem from './TodoItem';
 import styles from '../styles/AppStyles';
 
-export default function TodoList({ todos, onToggle, onDelete }) {
+export default function TodoList({ todos, onToggle, onDelete, onRefresh, refreshing }) {
   return (
     <FlatList
       data={todos}
@@ -13,6 +13,7 @@ export default function TodoList({ todos, onToggle, onDelete }) {
       )}
       style={styles.list}
       contentContainerStyle={{ paddingBottom: 80 }}
+      {...(Platform.OS !== 'web' ? { onRefresh, refreshing } : {})}
     />
   );
 } 

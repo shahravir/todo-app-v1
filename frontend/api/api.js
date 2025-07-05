@@ -19,4 +19,13 @@ export async function updateTodo(id, updated) {
 
 export async function deleteTodo(id) {
   await axios.delete(`${API_URL}/todos/${id}`);
+}
+
+export async function pingBackend() {
+  try {
+    await axios.get(`${API_URL}/todos`, { timeout: 2000 });
+    return true;
+  } catch {
+    return false;
+  }
 } 
