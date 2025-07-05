@@ -1,26 +1,18 @@
 import React from 'react';
-import { Modal, Pressable, View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/AppStyles';
+import { Modal, View } from 'react-native';
+import { Drawer } from 'react-native-paper';
 
 export default function DrawerMenu({ open, onClose }) {
   return (
-    <Modal
-      visible={open}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.drawerOverlay} onPress={onClose}>
-        <Pressable style={styles.drawerContent} onPress={e => e.stopPropagation()}>
-          <View style={styles.menuContainer}>
-            <Text style={styles.menuTitle}>Menu</Text>
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuItemText}>All Todos</Text>
-            </TouchableOpacity>
+    <Modal visible={open} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+        <View style={{ width: 260, backgroundColor: '#f3f3f3', height: '100%', borderRightWidth: 1, borderRightColor: '#e0e0e0', paddingTop: 60 }}>
+          <Drawer.Section title="Menu">
+            <Drawer.Item label="All Todos" active onPress={() => {}} />
             {/* Future: folders, labels, settings, etc. */}
-          </View>
-        </Pressable>
-      </Pressable>
+          </Drawer.Section>
+        </View>
+      </View>
     </Modal>
   );
 } 

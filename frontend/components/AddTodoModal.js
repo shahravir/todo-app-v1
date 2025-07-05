@@ -1,77 +1,60 @@
 import React from 'react';
-import { Modal, Pressable, Text, TextInput, TouchableOpacity, View, Platform } from 'react-native';
-import styles from '../styles/AppStyles';
+import { View, Platform } from 'react-native';
+import { Dialog, Portal, TextInput, Button, SegmentedButtons } from 'react-native-paper';
 
 export default function AddTodoModal({ visible, input, setInput, description, setDescription, dueDate, setDueDate, priority, setPriority, tags, setTags, onAdd, onCancel, inputRef }) {
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onCancel}
-    >
-      <Pressable style={styles.modalOverlay} onPress={onCancel}>
-        <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
-          <Text style={styles.modalTitle}>Add Todo</Text>
+    <Portal>
+      <Dialog visible={visible} onDismiss={onCancel} style={{ borderRadius: 16 }}>
+        <Dialog.Title>Add Todo</Dialog.Title>
+        <Dialog.Content>
           <TextInput
             ref={inputRef}
-            style={styles.modalInput}
-            placeholder="What do you need to do?"
+            label="What do you need to do?"
             value={input}
             onChangeText={setInput}
-            onSubmitEditing={onAdd}
-            returnKeyType="done"
             autoFocus
             multiline
             maxLength={200}
+            style={{ marginBottom: 12 }}
           />
           <TextInput
-            style={styles.modalInput}
-            placeholder="Description (optional)"
+            label="Description (optional)"
             value={description}
             onChangeText={setDescription}
             multiline
             maxLength={500}
+            style={{ marginBottom: 12 }}
           />
           <TextInput
-            style={styles.modalInput}
-            placeholder="Due Date (YYYY-MM-DD, optional)"
+            label="Due Date (YYYY-MM-DD, optional)"
             value={dueDate}
             onChangeText={setDueDate}
-            keyboardType={Platform.OS === 'web' ? 'default' : 'numeric'}
             maxLength={10}
+            style={{ marginBottom: 12 }}
           />
-          <View style={{ width: '100%', marginBottom: 16 }}>
-            <Text style={{ marginBottom: 6, color: '#222', fontWeight: '500' }}>Priority</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              {['low', 'medium', 'high'].map(p => (
-                <TouchableOpacity
-                  key={p}
-                  style={[styles.modalBtn, { backgroundColor: priority === p ? '#4caf50' : '#eee', flex: 1, marginLeft: p === 'low' ? 0 : 8 }]}
-                  onPress={() => setPriority(p)}
-                >
-                  <Text style={[styles.modalBtnText, { color: priority === p ? '#fff' : '#222' }]}>{p.charAt(0).toUpperCase() + p.slice(1)}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          <SegmentedButtons
+            value={priority}
+            onValueChange={setPriority}
+            buttons={[
+              { value: 'low', label: 'Low' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'high', label: 'High' },
+            ]}
+            style={{ marginBottom: 12 }}
+          />
           <TextInput
-            style={styles.modalInput}
-            placeholder="Tags (comma separated, optional)"
+            label="Tags (comma separated, optional)"
             value={tags}
             onChangeText={setTags}
             maxLength={100}
           />
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#bbb' }]} onPress={onCancel}>
-              <Text style={styles.modalBtnText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalBtn} onPress={onAdd}>
-              <Text style={styles.modalBtnText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={onCancel} textColor="#bbb">Cancel</Button>
+          <Button onPress={onAdd} mode="contained">Add</Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
   );
 } 

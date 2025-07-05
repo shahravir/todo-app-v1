@@ -1,41 +1,54 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/AppStyles';
+import { View } from 'react-native';
+import { Checkbox, IconButton, Chip, Text } from 'react-native-paper';
 
 export default function TodoItem({ item, onToggle, onDelete }) {
   return (
-    <View style={styles.todoItem}>
-      <TouchableOpacity onPress={() => onToggle(item.id)} style={styles.checkbox}>
-        <Text style={{ color: item.done ? '#4caf50' : '#bbb', fontWeight: 'bold' }}>{item.done ? '✓' : ''}</Text>
-      </TouchableOpacity>
+    <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingVertical: 8, paddingHorizontal: 4 }}>
+      <Checkbox
+        status={item.done ? 'checked' : 'unchecked'}
+        onPress={() => onToggle(item.id)}
+        color="#4caf50"
+        style={{ marginRight: 8 }}
+      />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.todoText, item.done && styles.todoDone]}>{item.text}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', textDecorationLine: item.done ? 'line-through' : 'none', color: item.done ? '#bbb' : '#222' }}>
+          {item.text}
+        </Text>
         {item.description ? (
           <Text style={{ color: '#666', fontSize: 14, marginTop: 2 }}>{item.description}</Text>
         ) : null}
-        {(item.dueDate || item.priority || (item.tags && item.tags.length > 0)) && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 }}>
-            {item.dueDate && (
-              <Text style={{ color: '#e53935', fontSize: 13, marginRight: 10 }}>
-                Due: {new Date(item.dueDate).toLocaleDateString()}
-              </Text>
-            )}
-            {item.priority && (
-              <Text style={{ color: '#1976d2', fontSize: 13, marginRight: 10 }}>
-                Priority: {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
-              </Text>
-            )}
-            {item.tags && item.tags.length > 0 && (
-              <Text style={{ color: '#388e3c', fontSize: 13 }}>
-                Tags: {item.tags.join(', ')}
-              </Text>
-            )}
-          </View>
-        )}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 }}>
+          {item.dueDate && (
+            <Chip
+              icon="calendar"
+              style={{ marginRight: 6, marginBottom: 2, backgroundColor: '#f5f5f5', height: 26 }}
+              textStyle={{ fontSize: 12, color: '#888', fontWeight: '400' }}
+            >
+              {`Due: ${new Date(item.dueDate).toLocaleDateString()}`}
+            </Chip>
+          )}
+          {item.priority && (
+            <Chip
+              icon="alert"
+              style={{ marginRight: 6, marginBottom: 2, backgroundColor: '#f5f5f5', height: 26 }}
+              textStyle={{ fontSize: 12, color: '#888', fontWeight: '400' }}
+            >
+              {`Priority: ${item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}`}
+            </Chip>
+          )}
+          {item.tags && item.tags.length > 0 && (
+            <Chip
+              icon="label"
+              style={{ marginBottom: 2, backgroundColor: '#f5f5f5', height: 26 }}
+              textStyle={{ fontSize: 12, color: '#888', fontWeight: '400' }}
+            >
+              {`Tags: ${item.tags.join(', ')}`}
+            </Chip>
+          )}
+        </View>
       </View>
-      <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.deleteBtn}>
-        <Text style={{ color: '#e53935', fontWeight: 'bold' }}>✕</Text>
-      </TouchableOpacity>
+      <IconButton icon="delete" color="#e53935" onPress={() => onDelete(item.id)} style={{ marginLeft: 8 }} />
     </View>
   );
 } 

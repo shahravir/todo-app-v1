@@ -1,17 +1,14 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/AppStyles';
+import { View } from 'react-native';
+import { Drawer } from 'react-native-paper';
 
 export default function Sidebar() {
   return (
-    <View style={styles.sidebar}>
-      <View style={styles.menuContainer}>
-        <Text style={styles.menuTitle}>Menu</Text>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuItemText}>All Todos</Text>
-        </TouchableOpacity>
+    <View style={{ width: 260, backgroundColor: '#f3f3f3', height: '100%', borderRightWidth: 1, borderRightColor: '#e0e0e0', paddingTop: 60 }}>
+      <Drawer.Section title="Menu">
+        <Drawer.Item label="All Todos" active onPress={() => {}} />
         {/* Future: folders, labels, settings, etc. */}
-      </View>
+      </Drawer.Section>
     </View>
   );
 } 

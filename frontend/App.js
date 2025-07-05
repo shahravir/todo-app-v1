@@ -8,15 +8,30 @@ import TodoList from './components/TodoList';
 import AddTodoModal from './components/AddTodoModal';
 import Sidebar from './components/Sidebar';
 import DrawerMenu from './components/DrawerMenu';
-import Fab from './components/Fab';
+import FloatingActionButton from './components/Fab';
 import { fetchTodos, addTodo as apiAddTodo, updateTodo as apiUpdateTodo, deleteTodo as apiDeleteTodo, pingBackend } from './api/api';
 import { addToQueue, processQueue } from './api/offlineQueue';
 import NetInfo from '@react-native-community/netinfo';
+import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 
 const STORAGE_KEY = 'TODOS';
 const API_URL = 'http://localhost:3000';
 const SIDEBAR_WIDTH = 260;
 const BREAKPOINT = 900;
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#4caf50',
+    accent: '#1976d2',
+    background: '#fafafa',
+    surface: '#fff',
+    error: '#e53935',
+    text: '#222',
+    placeholder: '#bbb',
+  },
+};
 
 export default function App() {
   const [todos, setTodos] = useState([]);
@@ -240,94 +255,103 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
-        <ActivityIndicator size="large" color="#4caf50" />
-        <Text style={{ marginTop: 20 }}>Loading...</Text>
-      </View>
+      <PaperProvider theme={theme}>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
+          <ActivityIndicator size="large" color="#4caf50" />
+          <Text style={{ marginTop: 20 }}>Loading...</Text>
+        </View>
+      </PaperProvider>
     );
   }
 
   return (
-    <View style={styles.root}>
-      {(!isOnline || !isBackendAvailable) && (
-        <View style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          backgroundColor: '#ff9800',
-          paddingVertical: 10,
-          paddingHorizontal: 16,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-          elevation: 4,
-        }}>
-          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: 15 }}>
-            Backend unavailable. You are working offline. Changes will sync when backend is back.
-          </Text>
-        </View>
-      )}
-      {isLargeScreen && <Sidebar />}
-      {!isLargeScreen && (
-        <>
-          <TouchableOpacity style={styles.burgerBtn} onPress={() => setDrawerOpen(true)}>
-            <View style={styles.burgerBar} />
-            <View style={styles.burgerBar} />
-            <View style={styles.burgerBar} />
-          </TouchableOpacity>
-          <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-        </>
-      )}
-      <View style={[styles.container, isLargeScreen && { marginLeft: SIDEBAR_WIDTH }]}> 
-        <Text style={styles.title}>Minimalist Todo</Text>
-        <TextInput
-          style={{
-            width: '100%',
-            minHeight: 44,
-            fontSize: 18,
-            borderColor: '#eee',
-            borderWidth: 1,
-            borderRadius: 10,
-            paddingHorizontal: 16,
+    <PaperProvider theme={theme}>
+      <View style={[styles.root, { flexDirection: isLargeScreen ? 'row' : 'column' }]}>
+        {(!isOnline || !isBackendAvailable) && (
+          <View style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: '#ff9800',
             paddingVertical: 10,
-            marginBottom: 16,
-            backgroundColor: '#fafafa',
-            color: '#222',
-          }}
-          placeholder="Search todos..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-        />
-        <TodoList
-          todos={filteredTodos}
-          onToggle={handleToggleTodo}
-          onDelete={handleDeleteTodo}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-        />
-        <Fab onPress={() => setModalVisible(true)} />
-        <AddTodoModal
-          visible={modalVisible}
-          input={input}
-          setInput={setInput}
-          description={description}
-          setDescription={setDescription}
-          dueDate={dueDate}
-          setDueDate={setDueDate}
-          priority={priority}
-          setPriority={setPriority}
-          tags={tags}
-          setTags={setTags}
-          onAdd={handleAddTodo}
-          onCancel={() => { setModalVisible(false); setInput(''); setDescription(''); setDueDate(''); setPriority('medium'); setTags(''); }}
-          inputRef={inputRef}
-        />
-        <StatusBar style="auto" />
+            paddingHorizontal: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
+          }}>
+            <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: 15 }}>
+              Backend unavailable. You are working offline. Changes will sync when backend is back.
+            </Text>
+          </View>
+        )}
+        {isLargeScreen && (
+          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_WIDTH, zIndex: 10 }}>
+            <Sidebar />
+          </View>
+        )}
+        {!isLargeScreen && (
+          <>
+            <TouchableOpacity style={styles.burgerBtn} onPress={() => setDrawerOpen(true)}>
+              <View style={styles.burgerBar} />
+              <View style={styles.burgerBar} />
+              <View style={styles.burgerBar} />
+            </TouchableOpacity>
+            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+          </>
+        )}
+        <View style={{ flex: 1, paddingTop: 0, paddingHorizontal: 0, minHeight: 0, ...(isLargeScreen ? { marginLeft: SIDEBAR_WIDTH } : {}) }}> 
+          <TextInput
+            style={{
+              width: '100%',
+              minHeight: 44,
+              fontSize: 18,
+              borderColor: '#eee',
+              borderWidth: 1,
+              borderRadius: 10,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              marginBottom: 8,
+              backgroundColor: '#fafafa',
+              color: '#222',
+            }}
+            placeholder="Search todos..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          <View style={{ flex: 1 }}>
+            <TodoList
+              todos={filteredTodos}
+              onToggle={handleToggleTodo}
+              onDelete={handleDeleteTodo}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
+            />
+          </View>
+          <FloatingActionButton onPress={() => setModalVisible(true)} />
+          <AddTodoModal
+            visible={modalVisible}
+            input={input}
+            setInput={setInput}
+            description={description}
+            setDescription={setDescription}
+            dueDate={dueDate}
+            setDueDate={setDueDate}
+            priority={priority}
+            setPriority={setPriority}
+            tags={tags}
+            setTags={setTags}
+            onAdd={handleAddTodo}
+            onCancel={() => { setModalVisible(false); setInput(''); setDescription(''); setDueDate(''); setPriority('medium'); setTags(''); }}
+            inputRef={inputRef}
+          />
+          <StatusBar style="auto" />
+        </View>
       </View>
-    </View>
+    </PaperProvider>
   );
 }

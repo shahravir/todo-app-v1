@@ -1,15 +1,14 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
-import styles from '../styles/AppStyles';
+import { FAB } from 'react-native-paper';
+import { Platform } from 'react-native';
 
-export default function Fab({ onPress }) {
+export default function FloatingActionButton({ onPress }) {
   return (
-    <TouchableOpacity
-      style={styles.fab}
+    <FAB
+      icon="plus"
       onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.fabIcon}>＋</Text>
-    </TouchableOpacity>
+      style={{ position: Platform.OS === 'web' ? 'fixed' : 'absolute', right: 32, bottom: 40, zIndex: 10 }}
+      color="#fff"
+    />
   );
 } 
