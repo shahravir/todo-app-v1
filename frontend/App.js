@@ -288,7 +288,7 @@ export default function App() {
         )}
         {isLargeScreen && (
           <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_WIDTH, zIndex: 10 }}>
-            <Sidebar showCompleted={showCompleted} setShowCompleted={setShowCompleted} />
+            <Sidebar showCompleted={showCompleted} setShowCompleted={setShowCompleted} onAddTodo={() => setModalVisible(true)} />
           </View>
         )}
         {!isLargeScreen && (
@@ -298,7 +298,7 @@ export default function App() {
               <View style={styles.burgerBar} />
               <View style={styles.burgerBar} />
             </TouchableOpacity>
-            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} showCompleted={showCompleted} setShowCompleted={setShowCompleted} />
+            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} showCompleted={showCompleted} setShowCompleted={setShowCompleted} onAddTodo={() => { setDrawerOpen(false); setModalVisible(true); }} />
           </>
         )}
         <View style={{ flex: 1, paddingTop: 0, paddingHorizontal: 0, minHeight: 0, ...(isLargeScreen ? { marginLeft: SIDEBAR_WIDTH } : {}) }}> 
@@ -328,9 +328,9 @@ export default function App() {
               onDelete={handleDeleteTodo}
               onRefresh={handleRefresh}
               refreshing={refreshing}
+              onInlineAdd={handleAddTodo}
             />
           </View>
-          <FloatingActionButton onPress={() => setModalVisible(true)} />
           <AddTodoModal
             visible={modalVisible}
             input={input}
