@@ -51,6 +51,7 @@ export default function App() {
       setTodos(data);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
+      console.error('Failed to fetch todos:', e);
       const json = await AsyncStorage.getItem(STORAGE_KEY);
       if (json) setTodos(JSON.parse(json));
       else setTodos([]);
@@ -74,7 +75,9 @@ export default function App() {
       setTodos(newTodos);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
       socketRef.current.emit('todo:add', newTodo);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to add todo:', e);
+    }
   }
 
   async function handleToggleTodo(id) {
@@ -87,7 +90,9 @@ export default function App() {
       setTodos(newTodos);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
       socketRef.current.emit('todo:update', newTodo);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to update todo:', e);
+    }
   }
 
   async function handleDeleteTodo(id) {
@@ -97,7 +102,9 @@ export default function App() {
       setTodos(newTodos);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newTodos));
       socketRef.current.emit('todo:delete', id);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to delete todo:', e);
+    }
   }
 
   // Socket handlers
