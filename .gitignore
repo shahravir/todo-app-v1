@@ -35,3 +35,27 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# --- Frontend ---
+frontend/node_modules/
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/.vscode/
+frontend/.idea/
+
+# --- Backend ---
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production
+backend/logs/
+backend/uploads/
+backend/temp/
+backend/.vscode/
+backend/.idea/
+backend/coverage/
+backend/.nyc_output/
+backend/dist/
+backend/build/
