@@ -1,16 +1,31 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Checkbox, IconButton, Chip, Text } from 'react-native-paper';
+import { View, Platform, TouchableOpacity } from 'react-native';
+import { Checkbox, Chip, Text, IconButton } from 'react-native-paper';
 
-export default function TodoItem({ item, onToggle, onDelete }) {
+export default function TodoItem({ item, onToggle }) {
+  const checkbox = (
+    <Checkbox
+      status={item.done ? 'checked' : 'unchecked'}
+      onPress={() => onToggle(item.id)}
+      color="#4caf50"
+      uncheckedColor="#bbb"
+      style={{ marginRight: 8, backgroundColor: 'transparent' }}
+    />
+  );
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingVertical: 8, paddingHorizontal: 4 }}>
-      <Checkbox
-        status={item.done ? 'checked' : 'unchecked'}
-        onPress={() => onToggle(item.id)}
-        color="#4caf50"
-        style={{ marginRight: 8 }}
-      />
+      {Platform.OS === 'web' ? (
+        checkbox
+      ) : (
+        <IconButton
+          icon={item.done ? 'checkbox-marked' : 'checkbox-blank-outline'}
+          color={item.done ? '#4caf50' : '#bbb'}
+          size={28}
+          onPress={() => onToggle(item.id)}
+          style={{ marginRight: 8 }}
+        />
+      )}
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 20, fontWeight: 'bold', textDecorationLine: item.done ? 'line-through' : 'none', color: item.done ? '#bbb' : '#222' }}>
           {item.text}
@@ -48,7 +63,6 @@ export default function TodoItem({ item, onToggle, onDelete }) {
           )}
         </View>
       </View>
-      <IconButton icon="delete" color="#e53935" onPress={() => onDelete(item.id)} style={{ marginLeft: 8 }} />
     </View>
   );
 } 

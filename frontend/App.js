@@ -51,6 +51,7 @@ export default function App() {
   const [isBackendAvailable, setIsBackendAvailable] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     fetchAndSyncTodos();
@@ -243,6 +244,7 @@ export default function App() {
 
   // Filter todos based on search query
   const filteredTodos = todos.filter(todo => {
+    if (!showCompleted && todo.done) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -290,7 +292,7 @@ export default function App() {
         )}
         {isLargeScreen && (
           <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: SIDEBAR_WIDTH, zIndex: 10 }}>
-            <Sidebar />
+            <Sidebar showCompleted={showCompleted} setShowCompleted={setShowCompleted} />
           </View>
         )}
         {!isLargeScreen && (
@@ -300,7 +302,7 @@ export default function App() {
               <View style={styles.burgerBar} />
               <View style={styles.burgerBar} />
             </TouchableOpacity>
-            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} showCompleted={showCompleted} setShowCompleted={setShowCompleted} />
           </>
         )}
         <View style={{ flex: 1, paddingTop: 0, paddingHorizontal: 0, minHeight: 0, ...(isLargeScreen ? { marginLeft: SIDEBAR_WIDTH } : {}) }}> 
