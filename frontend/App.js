@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, Keyboard, ActivityIndicator, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { Text, View, Keyboard, ActivityIndicator, useWindowDimensions, TouchableOpacity, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io } from 'socket.io-client';
 import styles from './styles/AppStyles';
@@ -35,6 +35,7 @@ export default function App() {
   const [isOnline, setIsOnline] = useState(true);
   const [isBackendAvailable, setIsBackendAvailable] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchAndSyncTodos();
@@ -225,6 +226,18 @@ export default function App() {
     setRefreshing(false);
   };
 
+  // Filter todos based on search query
+  const filteredTodos = todos.filter(todo => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      todo.text.toLowerCase().includes(q) ||
+      (todo.description && todo.description.toLowerCase().includes(q)) ||
+      (todo.tags && todo.tags.join(',').toLowerCase().includes(q)) ||
+      (todo.priority && todo.priority.toLowerCase().includes(q))
+    );
+  });
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}> 
@@ -270,8 +283,27 @@ export default function App() {
       )}
       <View style={[styles.container, isLargeScreen && { marginLeft: SIDEBAR_WIDTH }]}> 
         <Text style={styles.title}>Minimalist Todo</Text>
+        <TextInput
+          style={{
+            width: '100%',
+            minHeight: 44,
+            fontSize: 18,
+            borderColor: '#eee',
+            borderWidth: 1,
+            borderRadius: 10,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            marginBottom: 16,
+            backgroundColor: '#fafafa',
+            color: '#222',
+          }}
+          placeholder="Search todos..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
         <TodoList
-          todos={todos}
+          todos={filteredTodos}
           onToggle={handleToggleTodo}
           onDelete={handleDeleteTodo}
           onRefresh={handleRefresh}
