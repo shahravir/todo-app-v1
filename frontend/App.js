@@ -100,22 +100,18 @@ export default function App() {
     setLoading(false);
   }
 
-  async function handleAddTodo() {
-    if (!input.trim()) return;
+  async function handleAddTodo(parsed) {
+    if (!parsed.cleanText.trim()) return;
     const todo = {
-      text: input.trim(),
-      description: description.trim(),
+      text: parsed.cleanText.trim(),
+      description: '',
       done: false,
       id: Date.now().toString(),
-      dueDate: dueDate ? new Date(dueDate) : null,
-      priority,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      dueDate: parsed.dueDate || null,
+      priority: parsed.priority || 'medium',
+      tags: parsed.tags || [],
     };
     setInput('');
-    setDescription('');
-    setDueDate('');
-    setPriority('medium');
-    setTags('');
     setModalVisible(false);
     Keyboard.dismiss();
     if (!isOnline || !isBackendAvailable) {
@@ -339,16 +335,8 @@ export default function App() {
             visible={modalVisible}
             input={input}
             setInput={setInput}
-            description={description}
-            setDescription={setDescription}
-            dueDate={dueDate}
-            setDueDate={setDueDate}
-            priority={priority}
-            setPriority={setPriority}
-            tags={tags}
-            setTags={setTags}
             onAdd={handleAddTodo}
-            onCancel={() => { setModalVisible(false); setInput(''); setDescription(''); setDueDate(''); setPriority('medium'); setTags(''); }}
+            onCancel={() => { setModalVisible(false); setInput(''); }}
             inputRef={inputRef}
           />
           <StatusBar style="auto" />
